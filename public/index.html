@@ -4,53 +4,85 @@
   <meta charset="utf-8" />
   <title>Registration</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="shortcut icon" href="https://swipey.ai/icons/favicon.png" type="image/x-icon">
+  <meta property="og:title" content="Swipey">
+  <meta property="og:image" content="https://swipey.ai/icons/favicon.png">
+  <meta name="twitter:title" content="Swipey">
+  <meta name="twitter:image" content="https://swipey.ai/icons/favicon.png">
   <style>
-    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#19121c; margin:0; }
-    .card { width: 560px; max-width: 83vw; margin: 6vh auto; background:#fff; padding: 28px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.06); }
-    .header { text-align:center; margin-bottom: 18px; }
-    
-    .title { font-size: 28px; line-height:1.2; margin: 10px 0 2px; color:#0b1b3a; font-weight: 700; }
-    .subtitle { color:#6b7280; margin:0; font-size:14px; }
-    .row { margin-bottom:14px; }
-    label { display:block; font-size:14px; color:#4b5563; margin-bottom:6px; }
-    .control { width:100%; height:46px; border:1px solid #e5e7eb; border-radius:12px; padding:0 12px; font-size:15px; background:#fff; outline:none; box-sizing:border-box; transition: box-shadow .15s, border-color .15s; }
-    .control:focus { border-color:#91b9f7; box-shadow:0 0 0 3px rgba(145,185,247,.3); }
-    select.control { appearance:none; -webkit-appearance:none; -moz-appearance:none;
-      background-image: linear-gradient(45deg,transparent 50%,#6b7280 50%), linear-gradient(135deg,#6b7280 50%,transparent 50%), linear-gradient(to right,transparent,transparent);
-      background-position: calc(100% - 20px) calc(50% - 4px), calc(100% - 14px) calc(50% - 4px), calc(100% - 2.2em) 0.55em;
-      background-size: 6px 6px, 6px 6px, 1px 1.9em; background-repeat:no-repeat; padding-right:42px;
+    :root{
+      --brand1:#fe6283; --brand2:#9e54bb; --ink:#0b1b3a; --muted:#6b7280;
+      --panel:#ffffff; --bg:#19121c; --ring:#91b9f7;
     }
-    .divider { margin:18px 0;border:none;border-top:1px solid #eef0f4 }
-    .btn { width:100%; height:50px; border:0; border-radius:14px; font-weight:600; font-size:16px; cursor:pointer; }
-    .btn.primary { background-image: linear-gradient(225deg, #fe6283, #9e54bb); color:#fff; }
-    .muted { color:#6b7280; font-size:14px; text-align:center; margin-top:10px; }
-    .msg { margin-top:12px; font-size:14px; min-height:1.2em; }
-    .msg.success { color:#0d6a2a; }
-    .msg.error { color:#b91c1c; }
+    body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+    .card{width:560px;max-width:83vw;margin:6vh auto;background:#fff;padding:28px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.06)}
+    .header{text-align:center;margin-bottom:18px}
+    .logo img{width:200px;height:auto;object-fit:contain}
+    .title{font-size:28px;line-height:1.2;margin:10px 0 2px;color:var(--ink);font-weight:700}
+    .subtitle{color:var(--muted);margin:0;font-size:14px}
+    .row{margin-bottom:14px}
+    label{display:block;font-size:14px;color:#4b5563;margin-bottom:6px}
+    .control{width:100%;height:46px;border:1px solid #e5e7eb;border-radius:12px;padding:0 12px;font-size:15px;background:#fff;outline:0;box-sizing:border-box;transition:box-shadow .15s,border-color .15s}
+    .control:focus{border-color:var(--ring);box-shadow:0 0 0 3px rgba(145,185,247,.3)}
+    select.control{appearance:none;-webkit-appearance:none;-moz-appearance:none;
+      background-image:linear-gradient(45deg,transparent 50%,#6b7280 50%),linear-gradient(135deg,#6b7280 50%,transparent 50%),linear-gradient(to right,transparent,transparent);
+      background-position:calc(100% - 20px) calc(50% - 4px),calc(100% - 14px) calc(50% - 4px),calc(100% - 2.2em) .55em;
+      background-size:6px 6px,6px 6px,1px 1.9em;background-repeat:no-repeat;padding-right:42px}
+    .divider{margin:18px 0;border:none;border-top:1px solid #eef0f4}
+    .btn{width:100%;height:50px;border:0;border-radius:14px;font-weight:600;font-size:16px;cursor:pointer}
+    .btn.primary{background-image:linear-gradient(225deg,var(--brand1),var(--brand2));color:#fff}
+    .msg{margin-top:12px;font-size:14px;min-height:1.2em}
+    .msg.success{color:#0d6a2a}.msg.error{color:#b91c1c}
+    /* validation */
+    .control.is-invalid{border-color:#ef4444!important;box-shadow:0 0 0 3px rgba(239,68,68,.2)!important}
+    .control.is-valid{border-color:#16a34a!important;box-shadow:0 0 0 3px rgba(22,163,74,.2)!important}
+    .hidden{display:none!important}
 
-    /* validation colors */
-    .control.is-invalid { border-color:#ef4444 !important; box-shadow:0 0 0 3px rgba(239,68,68,.2) !important; }
-    .control.is-valid   { border-color:#16a34a !important; box-shadow:0 0 0 3px rgba(22,163,74,.2) !important; }
-
-    /* success modal */
-    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:999; }
-    .overlay.show { display:flex; }
-    .modal { width: 520px; max-width:92vw; background:#fff; color:#0b1b3a; border-radius:16px; padding:24px; box-shadow:0 20px 60px rgba(0,0,0,.25); text-align:center; }
-    .modal h2 { margin:0 0 8px; font-size:24px; }
-    .modal p { margin:0 0 18px; color:#4b5563; }
-    .modal .btn { width:auto; padding:0 18px; }
-    .hidden { display:none !important; }
+    /* SUCCESS MODAL (как на скрине) */
+    .overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:999;background:rgba(0,0,0,.5)}
+    .show{display:block!important}
+    .modal-wrap{
+      width:min(860px,94vw); background:#fff; border-radius:26px; padding:28px; 
+      box-shadow:0 30px 120px rgba(0,0,0,.45);
+    }
+    .brand-band{display:flex;align-items:center;gap:16px;padding:6px 8px 18px}
+    .brand-band img{height:56px;width:auto}
+    .brand-band .partners{margin-left:auto;font-weight:700;letter-spacing:.02em;color:#4b5563}
+    .success-panel{
+      display: none;
+      background:linear-gradient(#ffffff,#fafafa); border-radius:22px; padding:26px; 
+      box-shadow:0 18px 38px rgba(0,0,0,.08) inset, 0 14px 40px rgba(0,0,0,.08);
+      margin:25px 8px 10px;
+    }
+    .success-title{font-size:28px;color:#0d1b2a;margin:0 0 6px;text-align:center;font-weight:800}
+    .success-sub{color:#475569;text-align:center;margin:0 0 18px}
+    .btn-cta{
+      display:inline-flex;align-items:center;justify-content:center;min-width:140px;
+      padding:0 22px;height:46px;border-radius:14px;border:0;cursor:pointer;
+      background-image:linear-gradient(225deg,var(--brand2),var(--brand1));color:#fff;font-weight:700;font-size:16px;
+      box-shadow:0 6px 20px rgba(158,84,187,.35); transition:transform .05s ease}
+    .btn-cta:active{transform:translateY(1px)}
+    .success-cta{display:flex;justify-content:center}
   </style>
 </head>
 <body>
 
+  <!-- форма -->
   <div id="card" class="card">
     <div class="header">
       <div class="logo">
-        <img src="https://cdn.prod.website-files.com/671cacb5ad794eb512198be7/67bd1dd0b07424fd160bc81e_Asset%203%20(1).svg" alt="Brand">
+        <!-- поставьте свой логотип -->
+        <img src="https://cdn.prod.website-files.com/671cacb5ad794eb512198be7/67bd1dd0b07424fd160bc81e_Asset%203%20(1).svg" alt="swipeyai partners">
       </div>
-      <h1 class="title">Registration</h1>
-      <p class="subtitle">Your credentials</p>
+      <div  class="success-panel" id="success-panel">
+        <h2 id="m-title" class="success-title">Registration Completer 🎉</h2>
+        <p class="success-sub">Please check your email to activate your account.</p>
+        <div class="success-cta">
+          <button id="closeModal" class="btn-cta">Close</button>
+        </div>
+      </div>
+      <h1 id="reg_title" class="title">Registration</h1>
+      <p id="logo" class="subtitle">Your credentials</p>
     </div>
 
     <form id="regForm" novalidate>
@@ -58,7 +90,6 @@
         <label for="email">Login</label>
         <input id="email" name="email" type="email" placeholder="your@email.com" required class="control" />
       </div>
-
       <div class="row">
         <label for="password">Password</label>
         <input id="password" name="password" type="password" placeholder="Password" minlength="8" required class="control" />
@@ -70,7 +101,6 @@
         <label for="firstName">First Name</label>
         <input id="firstName" name="firstName" placeholder="First name" required class="control" />
       </div>
-
       <div class="row">
         <label for="lastName">Last Name</label>
         <input id="lastName" name="lastName" placeholder="Last name" required class="control" />
@@ -80,139 +110,101 @@
         <label for="messengerType">Messenger type</label>
         <select id="messengerType" name="messengerType" required class="control">
           <option value="" disabled selected>Choose…</option>
-          <option>Telegram</option>
-          <option>WhatsApp</option>
-          <option>Skype</option>
-          <option>WeChat</option>
-          <option>Other</option>
+          <option>Telegram</option><option>WhatsApp</option><option>Skype</option><option>WeChat</option><option>Other</option>
         </select>
       </div>
 
       <div class="row">
         <label for="messenger">Messenger</label>
-        <input id="messenger" name="messenger" placeholder="Username / Phone / Link" class="control" />
+        <input id="messenger" name="messenger" placeholder="username / phone / link" class="control" />
       </div>
 
       <button id="submitBtn" class="btn primary" type="submit">Sign Up</button>
       <div id="msg" class="msg"></div>
-      <p class="muted">By continuing you agree to the processing of your data for registration.</p>
     </form>
   </div>
 
-  <!-- Success modal -->
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="m-title">
-    <div class="modal">
-      <h2 id="m-title">Registration submitted 🎉</h2>
-      <p>Check your e-mail if confirmation is required.</p>
-      <button id="closeModal" class="btn primary">Close</button>
-    </div>
-  </div>
+  
 
   <script>
+    // элементы
     const form = document.getElementById('regForm');
     const btn = document.getElementById('submitBtn');
     const msg = document.getElementById('msg');
     const card = document.getElementById('card');
-    const overlay = document.getElementById('overlay');
-    const closeModal = document.getElementById('closeModal');
+    const overlay = document.getElementById('success-panel');
+    const form = document.getElementById('regForm');
+     const logo = document.getElementById('logo');
+      const reg_title = document.getElementById('reg_title');
+    
 
-    // --- validation helpers ---
-    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-    const passRe  = /^.{8,}$/; // >= 8 chars (можешь усилить по требованиям)
-
-    function setValid(el, isValid) {
-      el.classList.remove('is-valid','is-invalid');
-      if (isValid === true) el.classList.add('is-valid');
-      if (isValid === false) el.classList.add('is-invalid');
-    }
-
-    function validateField(el) {
+    // валидация
+    const emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i, passRe=/^.{8,}$/;
+    function setValid(el, ok){ el.classList.remove('is-valid','is-invalid'); el.classList.add(ok?'is-valid':'is-invalid'); }
+    function validateField(el){
       const v = el.value.trim();
       let ok = true;
-
-      if (el.id === 'email') ok = emailRe.test(v);
-      else if (el.id === 'password') ok = passRe.test(v);
-      else if (el.id === 'firstName' || el.id === 'lastName') ok = v.length > 0;
-      else if (el.id === 'messengerType') ok = !!v; // select value not empty
-      else ok = true;
-
-      setValid(el, ok);
-      return ok;
+      if(el.id==='email') ok = emailRe.test(v);
+      else if(el.id==='password') ok = passRe.test(v);
+      else if(el.id==='firstName'||el.id==='lastName') ok = v.length>0;
+      else if(el.id==='messengerType') ok = !!v;
+      setValid(el, ok); return ok;
     }
-
-    // real-time validation
-    ['email','password','firstName','lastName','messenger'].forEach(id => {
-      const el = document.getElementById(id);
-      el.addEventListener('input', () => validateField(el));
-      el.addEventListener('blur', () => validateField(el));
+    ['email','password','firstName','lastName','messenger'].forEach(id=>{
+      const el=document.getElementById(id);
+      el.addEventListener('input',()=>validateField(el));
+      el.addEventListener('blur',()=>validateField(el));
     });
-    const sel = document.getElementById('messengerType');
-    sel.addEventListener('change', () => validateField(sel));
-
-    function validateForm() {
-      const fields = ['email','password','firstName','lastName','messengerType'];
-      return fields.map(id => validateField(document.getElementById(id))).every(Boolean);
+    document.getElementById('messengerType').addEventListener('change', e=>validateField(e.target));
+    function validateForm(){
+      return ['email','password','firstName','lastName','messengerType'].map(id=>validateField(document.getElementById(id))).every(Boolean);
     }
 
-    // --- submit handler ---
-    form.addEventListener('submit', async (e) => {
+    // submit
+    form.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      msg.textContent = '';
-
-      // client-side validation
-      if (!validateForm()) {
-        msg.className = 'msg error';
-        msg.textContent = 'Please correct highlighted fields.';
-        return;
+      if(!validateForm()){
+        msg.className='msg error'; msg.textContent='Please correct highlighted fields.'; return;
       }
+      msg.textContent=''; btn.disabled=true; btn.textContent='Submitting…';
 
-      btn.disabled = true;
-      btn.textContent = 'Submitting…';
-
-      const payload = {
-        email: form.email.value.trim(),
-        password: form.password.value,
-        firstName: form.firstName.value.trim(),
-        lastName: form.lastName.value.trim(),
-        messengerType: form.messengerType.value,
-        messenger: form.messenger.value.trim()
+      const payload={
+        email:form.email.value.trim(),
+        password:form.password.value,
+        firstName:form.firstName.value.trim(),
+        lastName:form.lastName.value.trim(),
+        messengerType:form.messengerType.value,
+        messenger:form.messenger.value.trim()
       };
 
-      try {
-        const res = await fetch('/signup-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Request failed');
+      try{
+        const r = await fetch('/signup-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const data = await r.json();
+        if(!r.ok) throw new Error(data.error||'Request failed');
 
-        // success → hide form card body and show modal
+        // УСПЕХ: скрываем форму и показываем модалку как на макете
         form.classList.add('hidden');
-        msg.className = 'msg success';
-        msg.textContent = 'Completed. Check your e-mail if confirmation is required.';
-        overlay.classList.add('show');
-      } catch (err) {
-        msg.className = 'msg error';
-        msg.textContent = 'Error: ' + err.message;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Sign Up';
+    logo.classList.add('hidden');
+    reg_title.classList.add('hidden');
+    overlay.classList.add('show');
+      }catch(err){
+        msg.className='msg error'; msg.textContent='Error: '+err.message;
+      }finally{
+        btn.disabled=false; btn.textContent='Sign Up';
       }
     });
 
-    // modal actions
-    function closeSuccess() {
+    // закрыть модалку
+    function closeSuccess(){
       overlay.classList.remove('show');
-      // опционально: вернуть форму пустой для повторной регистрации
-      form.reset();
-      form.classList.remove('hidden');
-      // снять статусы валидации
-      document.querySelectorAll('.control').forEach(el => el.classList.remove('is-valid','is-invalid'));
+      // при желании можно оставить форму скрытой; если хотите заново — раскомментируйте:
+      // form.reset(); form.classList.remove('hidden');
+      // document.querySelectorAll('.control').forEach(el=>el.classList.remove('is-valid','is-invalid'));
     }
     closeModal.addEventListener('click', closeSuccess);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeSuccess(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && overlay.classList.contains('show')) closeSuccess(); });
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) closeSuccess(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && overlay.classList.contains('show')) closeSuccess(); });
   </script>
+  
 </body>
 </html>
