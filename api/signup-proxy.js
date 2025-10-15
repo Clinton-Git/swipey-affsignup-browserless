@@ -65,9 +65,9 @@ export default async function handler(req, res) {
     await page.goto('https://affiliate.swipey.ai/signup', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Try multiple field strategies to be resilient to DOM changes
-    await typeSmart(page, { label: 'Email', placeholder: 'email', selector: 'input[type="email"]' }, email);
-    await typeSmart(page, { label: 'Password', placeholder: 'Password', selector: 'input[type="password"]' }, password);
-
+    await typeSmart(page, { label: 'Email', placeholder: 'your@email.com', selector: 'input[name="email"][type="text"]' }, email);
+    await typeSmart(page, { label: 'Password', placeholder: 'Password', selector: 'input[name="password"][type="password"]' }, password);
+    
     // Primary next button (try by text, role, or type)
     const nextBtn = page.getByRole('button', { name: /next|continue|sign up/i }).first();
     await nextBtn.waitFor({ state: 'visible', timeout: 15000 }).catch(async () => {});
