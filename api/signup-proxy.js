@@ -103,23 +103,39 @@ export default async function handler(req, res) {
       label: 'Last name'
     }, lastName);
 
-    // Messenger type — React-Select
-    if (messengerType) {
-      const selectControl = page.locator('.react-select__input__control');
-      await selectControl.waitFor({ state: 'visible', timeout: 15000 });
-      await selectControl.click();
+    // Messenger type — React-Select (robust for various classnames)
+if (messengerType) {
+  // 1) Открываем контрол (и старые, и новые классы react-select)
+  const control = page.locator(
+    '.react-select__input__control, .react-select__control'
+  );
+  await control.first().waitFor({ state: 'visible', timeout: 15000 });
+  await control.first().click();
 
-      const selectInput = page.locator('.react-select__input__input');
-      await selectInput.waitFor({ state: 'visible', timeout: 10000 });
-      await selectInput.fill(messengerType); // "Telegram" | "WhatsApp" | "Skype" | "WeChat" | "Other"
-      await page.keyboard.press('Enter');
+  // 2) Берём именно ВНУТРЕННИЙ input (а не div-обёртку)
+  const rsInput = page.locator(
+    '.react-select__input input, input[id^="react-select-"][id$="-input"]'
+  );
+  await rsInput.waitFor({ state: 'visible', timeout: 10000 });
 
-      // hidden поле должно получить значение
-      await page.waitForFunction(() => {
-        const el = document.querySelector('input[name="messenger_type"]');
-        return !!el && !!el.value;
-      }, null, { timeout: 10000 });
-    }
+  // 3) Печатаем значение и подтверждаем выбор
+  await rsInput.fill('');
+  await rsInput.type(String(messengerType), { delay: 20 });
+
+  // дождёмся появления опции (если есть ролевая разметка), затем Enter
+  await page
+    .getByRole('option', { name: new RegExp(String(messengerType), 'i') })
+    .first()
+    .waitFor({ timeout: 5000 })
+    .catch(() => {});
+  await page.keyboard.press('Enter');
+
+  // 4) Проверяем, что hidden-поле заполнилось
+  await page.waitForFunction(() => {
+    const el = document.querySelector('input[name="messenger_type"]');
+    return !!el && !!el.value;
+  }, null, { timeout: 10000 });
+}
 
     // Messenger handle/value
     if (messenger) {
