@@ -27,11 +27,11 @@ async function typeSmart(page, selOrFn, value) {
 }
 
 async function selectSmart(page, selOrFn, value) {
+  // общий хелпер (на будущее); для React-Select ниже используем отдельную логику
   const { label, selector } = selOrFn;
   let locator = selector ? page.locator(selector) : page.getByLabel(label, { exact: false });
   await locator.waitFor({ state: 'visible', timeout: 20000 });
   await locator.selectOption({ label: String(value) }).catch(async () => {
-    // fallback by value/text
     await locator.selectOption(String(value)).catch(async () => {
       await locator.click();
       await page.getByRole('option', { name: new RegExp(String(value), 'i') }).first().click();
@@ -64,40 +64,84 @@ export default async function handler(req, res) {
     // 2) STEP 1 — open and fill email/password
     await page.goto('https://affiliate.swipey.ai/signup', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    // Try multiple field strategies to be resilient to DOM changes
-    await typeSmart(page, { label: 'Email', placeholder: 'your@email.com', selector: 'input[name="email"][type="text"]' }, email);
-    await typeSmart(page, { label: 'Password', placeholder: 'Password', selector: 'input[name="password"][type="password"]' }, password);
-    
-    // Primary next button (try by text, role, or type)
-    const nextBtn = page.getByRole('button', { name: /next|continue|sign up/i }).first();
-    await nextBtn.waitFor({ state: 'visible', timeout: 15000 }).catch(async () => {});
-    if (await nextBtn.isVisible()) {
-      await nextBtn.click();
-    } else {
-      await page.locator('button[type="submit"], button').first().click();
-    }
+    // точные селекторы по твоей разметке
+    await typeSmart(page, {
+      label: 'Email',
+      placeholder: 'your@email.com',
+      selector: 'input[name="email"][type="text"]'
+    }, email);
+
+    await typeSmart(page, {
+      label: 'Password',
+      placeholder: 'Password',
+      selector: 'input[name="password"][type="password"]'
+    }, password);
+
+    // Step 1 — submit "Sign Up" (точный селектор + ожидание снятия disabled)
+    const submit1 = page.locator(
+      'button[type="submit"].btn.btn-primary.account__btn.account__btn--small',
+      { hasText: 'Sign Up' }
+    );
+    await submit1.waitFor({ state: 'visible', timeout: 15000 });
+    const el1 = await submit1.elementHandle();
+    await page.waitForFunction((el) => !!el && !el.disabled, el1, { timeout: 15000 });
+    await submit1.click();
+
+    // ждём появление полей 2-го шага
+    await page.waitForSelector('input[name="firstname"]', { timeout: 20000 });
 
     // 3) STEP 2 — first/last/messenger
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000); // give SPA time to switch step
+    await typeSmart(page, {
+      selector: 'input[name="firstname"]',
+      placeholder: 'First name',
+      label: 'First Name'
+    }, firstName);
 
-    await typeSmart(page, { label: 'First Name', placeholder: 'First' }, firstName);
-    await typeSmart(page, { label: 'Last Name', placeholder: 'Last' }, lastName);
+    await typeSmart(page, {
+      selector: 'input[name="lastname"]',
+      placeholder: 'Last name',
+      label: 'Last name'
+    }, lastName);
 
+    // Messenger type — React-Select
     if (messengerType) {
-      await selectSmart(page, { label: /Messenger/i }, messengerType);
-    }
-    if (messenger) {
-      await typeSmart(page, { label: /Messenger/i, placeholder: /@|phone|handle|username/i, selector: 'input[name*="messenger"], input[name*="contact"], input[type="text"]' }, messenger);
+      const selectControl = page.locator('.react-select__input__control');
+      await selectControl.waitFor({ state: 'visible', timeout: 15000 });
+      await selectControl.click();
+
+      const selectInput = page.locator('.react-select__input__input');
+      await selectInput.waitFor({ state: 'visible', timeout: 10000 });
+      await selectInput.fill(messengerType); // "Telegram" | "WhatsApp" | "Skype" | "WeChat" | "Other"
+      await page.keyboard.press('Enter');
+
+      // hidden поле должно получить значение
+      await page.waitForFunction(() => {
+        const el = document.querySelector('input[name="messenger_type"]');
+        return !!el && !!el.value;
+      }, null, { timeout: 10000 });
     }
 
-    // submit
-    const submitBtn = page.getByRole('button', { name: /submit|finish|complete|sign up/i }).first();
-    if (await submitBtn.isVisible().catch(() => false)) {
-      await submitBtn.click();
-    } else {
-      await page.locator('button[type="submit"], button').last().click();
+    // Messenger handle/value
+    if (messenger) {
+      await typeSmart(page, {
+        selector: 'input[name="messenger"]',
+        placeholder: 'Skype/Telegram/Etc.',
+        label: 'Messenger'
+      }, messenger);
     }
+
+    // submit step 2 — "Complete Sign Up"
+    const submit2 = page.locator(
+      'button[type="submit"].btn.btn-primary.account__btn.account__btn--small',
+      { hasText: 'Complete Sign Up' }
+    );
+    await submit2.waitFor({ state: 'visible', timeout: 15000 });
+
+    // на всякий случай ждём, если кнопка тоже может быть disabled
+    const el2 = await submit2.elementHandle();
+    await page.waitForFunction((el) => !!el && !el.disabled, el2, { timeout: 15000 }).catch(() => {});
+
+    await submit2.click();
 
     await page.waitForLoadState('networkidle', { timeout: 45000 }).catch(() => {});
     const html = (await page.content()) || '';
