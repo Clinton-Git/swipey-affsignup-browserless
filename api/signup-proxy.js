@@ -103,37 +103,40 @@ export default async function handler(req, res) {
       label: 'Last name'
     }, lastName);
 
-    // Messenger type — React-Select (robust for various classnames)
+    // Messenger type — React-Select (устойчиво, без strict mode ошибок)
 if (messengerType) {
-  // 1) Открываем контрол (и старые, и новые классы react-select)
+  // 1) открыть контрол (совместимо с разными версиями классов)
   const control = page.locator(
     '.react-select__input__control, .react-select__control'
-  );
-  await control.first().waitFor({ state: 'visible', timeout: 15000 });
-  await control.first().click();
+  ).first();
+  await control.waitFor({ state: 'visible', timeout: 15000 });
+  await control.click();
 
-  // 2) Берём именно ВНУТРЕННИЙ input (а не div-обёртку)
-  const rsInput = page.locator(
-    '.react-select__input input, input[id^="react-select-"][id$="-input"]'
-  );
+  // 2) взять именно текстовый input внутри react-select, исключая hidden
+  const rsInput = page
+    .locator('input[id^="react-select-"][id$="-input"][type="text"]')
+    .first();
+
   await rsInput.waitFor({ state: 'visible', timeout: 10000 });
-
-  // 3) Печатаем значение и подтверждаем выбор
   await rsInput.fill('');
   await rsInput.type(String(messengerType), { delay: 20 });
 
-  // дождёмся появления опции (если есть ролевая разметка), затем Enter
-  await page
-    .getByRole('option', { name: new RegExp(String(messengerType), 'i') })
-    .first()
-    .waitFor({ timeout: 5000 })
-    .catch(() => {});
-  await page.keyboard.press('Enter');
+  // 3) ожидать и кликнуть опцию, если она отрисована; иначе подтвердить Enter
+  const option = page.locator(
+    '.react-select__option, [class*="react-select__option"]'
+  ).filter({ hasText: new RegExp(String(messengerType), 'i') }).first();
 
-  // 4) Проверяем, что hidden-поле заполнилось
+  const hasOption = await option.isVisible().catch(() => false);
+  if (hasOption) {
+    await option.click();
+  } else {
+    await page.keyboard.press('Enter');
+  }
+
+  // 4) убедиться, что hidden-поле реально получило значение
   await page.waitForFunction(() => {
     const el = document.querySelector('input[name="messenger_type"]');
-    return !!el && !!el.value;
+    return !!el && typeof el.value === 'string' && el.value.length > 0;
   }, null, { timeout: 10000 });
 }
 
