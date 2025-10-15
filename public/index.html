@@ -9,6 +9,7 @@
   <meta property="og:image" content="https://swipey.ai/icons/favicon.png">
   <meta name="twitter:title" content="Swipey">
   <meta name="twitter:image" content="https://swipey.ai/icons/favicon.png">
+  <script src="https://rtrk.swipey.club/uniclick.js?attribution=lastpaid&cookiedomain=www.swipey.partners&cookieduration=90&defaultcampaignid=68e4f0f6e43c5c444b95c6cd&regviewonce=false"></script>
   <style>
     :root{
       --brand1:#fe6283; --brand2:#9e54bb; --ink:#0b1b3a; --muted:#6b7280;
@@ -116,7 +117,7 @@
 
       <div class="row">
         <label for="messenger">Messenger</label>
-        <input id="messenger" name="messenger" placeholder="username / phone / link" class="control" />
+        <input id="messenger" name="messenger" placeholder="Username / Phone / Link" class="control" />
       </div>
 
       <button id="submitBtn" class="btn primary" type="submit">Sign Up</button>
@@ -127,6 +128,10 @@
   
 
   <script>
+     /** CONFIG **/
+  const POSTBACK_BASE = 'https://rtrk.swipey.club/postback'; // конечная точка
+  const POSTBACK_TYPE = 'registration';
+
     // элементы
     const form = document.getElementById('regForm');
     const btn = document.getElementById('submitBtn');
@@ -160,6 +165,29 @@
       return ['email','password','firstName','lastName','messengerType'].map(id=>validateField(document.getElementById(id))).every(Boolean);
     }
 
+
+    /** Helpers **/
+  function getClickId() {
+    // читаем только clickid из query
+    const p = new URLSearchParams(location.search);
+    return p.get('clickid') || '';
+  }
+  function showSuccessModal(){ overlay.classList.add('show'); }
+  function hideSuccessModal(){ overlay.classList.remove('show'); }
+
+    // Отправка GET-пикселя постбека
+  function firePostback(clickid){
+    if(!clickid) { console.warn('postback skipped: empty clickid'); return false; }
+    const url = `${POSTBACK_BASE}?clickid=${encodeURIComponent(clickid)}&type=${encodeURIComponent(POSTBACK_TYPE)}`;
+    // Пиксель — максимально совместимо
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer-when-downgrade';
+    img.src = url + `&ts=${Date.now()}`; // чтобы не кэшился
+    return true;
+    // Если захочешь fetch:
+    // return fetch(url, { method:'GET', mode:'no-cors', keepalive:true }).then(()=>true).catch(()=>false);
+  }
+
     // submit
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
@@ -187,6 +215,10 @@
     logo.classList.add('hidden');
     reg_title.classList.add('hidden');
     overlay.classList.add('show');
+
+     // Постбек (только clickid)
+      const clickid = getClickId();
+      firePostback(clickid);
       }catch(err){
         msg.className='msg error'; msg.textContent='Error: '+err.message;
       }finally{
@@ -204,6 +236,23 @@
     closeModal.addEventListener('click', closeSuccess);
     overlay.addEventListener('click', e=>{ if(e.target===overlay) closeSuccess(); });
     document.addEventListener('keydown', e=>{ if(e.key==='Escape' && overlay.classList.contains('show')) closeSuccess(); });
+
+     /** TEST HELPERS **/
+  // 1) Показать модалку успеха без постбека
+  function simulateSuccess(){ form.classList.add('hidden'); showSuccessModal(); console.log('✅ Simulated success (no postback)'); }
+  // 2) Показать модалку И отправить постбек.
+  //    Можно передать clickid вручную: simulateSuccessWithPostback('abc123')
+  function simulateSuccessWithPostback(clickidOverride){
+    const cid = clickidOverride || getClickId() || 'test-clickid';
+    form.classList.add('hidden');
+    showSuccessModal();
+    const ok = firePostback(cid);
+    console.log('✅ Simulated success WITH postback:', ok, { clickid: cid, type: POSTBACK_TYPE });
+  }
+  // Примеры в консоли:
+  // simulateSuccess();
+  // simulateSuccessWithPostback();            // возьмёт clickid из URL, или 'test-clickid'
+  // simulateSuccessWithPostback('fsddas');    // отправит на ...postback?clickid=fsddas&type=registration
   </script>
   
 </body>
