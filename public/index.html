@@ -76,7 +76,7 @@
         <img src="https://cdn.prod.website-files.com/671cacb5ad794eb512198be7/67bd1dd0b07424fd160bc81e_Asset%203%20(1).svg" alt="swipeyai partners">
       </div>
       <div  class="success-panel" id="success-panel">
-        <h2 id="m-title" class="success-title">Registration Completer 🎉</h2>
+        <h2 id="m-title" class="success-title">Registration Completed 🎉</h2>
         <p class="success-sub">Please check your email to activate your account.</p>
         <div class="success-cta">
           <button id="closeModal" class="btn-cta">Close</button>
@@ -127,133 +127,133 @@
 
   
 
-  <script>
-     /** CONFIG **/
-  const POSTBACK_BASE = 'https://rtrk.swipey.club/postback'; // конечная точка
+ <script>
+  /** CONFIG **/
+  const POSTBACK_BASE = 'https://rtrk.swipey.club/postback';
   const POSTBACK_TYPE = 'registration';
+  const CLICKID_COOKIE = 'clickid';
+  const CLICKID_TTL_DAYS = 7;
 
-    // элементы
-    const form = document.getElementById('regForm');
-    const btn = document.getElementById('submitBtn');
-    const msg = document.getElementById('msg');
-    const card = document.getElementById('card');
-    const overlay = document.getElementById('success-panel');
-   
-     const logo = document.getElementById('logo');
-      const reg_title = document.getElementById('reg_title');
-    
+  // элементы
+  const form = document.getElementById('regForm');
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('msg');
+  const card = document.getElementById('card');
+  const overlay = document.getElementById('success-panel');
+  const logo = document.getElementById('logo');
+  const reg_title = document.getElementById('reg_title');
 
-    // валидация
-    const emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i, passRe=/^.{8,}$/;
-    function setValid(el, ok){ el.classList.remove('is-valid','is-invalid'); el.classList.add(ok?'is-valid':'is-invalid'); }
-    function validateField(el){
-      const v = el.value.trim();
-      let ok = true;
-      if(el.id==='email') ok = emailRe.test(v);
-      else if(el.id==='password') ok = passRe.test(v);
-      else if(el.id==='firstName'||el.id==='lastName') ok = v.length>0;
-      else if(el.id==='messengerType') ok = !!v;
-      setValid(el, ok); return ok;
-    }
-    ['email','password','firstName','lastName','messenger'].forEach(id=>{
-      const el=document.getElementById(id);
-      el.addEventListener('input',()=>validateField(el));
-      el.addEventListener('blur',()=>validateField(el));
-    });
-    document.getElementById('messengerType').addEventListener('change', e=>validateField(e.target));
-    function validateForm(){
-      return ['email','password','firstName','lastName','messengerType'].map(id=>validateField(document.getElementById(id))).every(Boolean);
-    }
+  /** Cookie helpers **/
+  function setCookie(name, value, days){
+    const d = new Date();
+    d.setTime(d.getTime() + (days*24*60*60*1000));
+    const expires = "expires="+ d.toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; ${expires}; path=/; SameSite=Lax`;
+  }
+  function getCookie(name){
+    const m = document.cookie.match(new RegExp('(?:^|; )'+name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g,'\\$&')+'=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : '';
+  }
 
-
-    /** Helpers **/
-  function getClickId() {
-    // читаем только clickid из query
+  /** ClickID logic **/
+  function readClickIdFromUrl(){
     const p = new URLSearchParams(location.search);
     return p.get('clickid') || '';
   }
-  function showSuccessModal(){ overlay.classList.add('show'); }
-  function hideSuccessModal(){ overlay.classList.remove('show'); }
+  function saveClickIdIfInUrl(){
+    const cid = readClickIdFromUrl();
+    if (cid) setCookie(CLICKID_COOKIE, cid, CLICKID_TTL_DAYS);
+    return cid;
+  }
+  function getClickId(){
+    return getCookie(CLICKID_COOKIE) || readClickIdFromUrl() || '';
+  }
+  // сохранить clickid при заходе, если есть в URL
+  saveClickIdIfInUrl();
 
-    // Отправка GET-пикселя постбека
+  /** Валидация **/
+  const emailRe=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i, passRe=/^.{8,}$/;
+  function setValid(el, ok){ el.classList.remove('is-valid','is-invalid'); el.classList.add(ok?'is-valid':'is-invalid'); }
+  function validateField(el){
+    const v = el.value.trim();
+    let ok = true;
+    if(el.id==='email') ok = emailRe.test(v);
+    else if(el.id==='password') ok = passRe.test(v);
+    else if(el.id==='firstName'||el.id==='lastName') ok = v.length>0;
+    else if(el.id==='messengerType') ok = !!v;
+    setValid(el, ok); return ok;
+  }
+  ['email','password','firstName','lastName','messenger'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.addEventListener('input',()=>validateField(el));
+    el.addEventListener('blur',()=>validateField(el));
+  });
+  document.getElementById('messengerType').addEventListener('change', e=>validateField(e.target));
+  function validateForm(){
+    return ['email','password','firstName','lastName','messengerType']
+      .map(id=>validateField(document.getElementById(id))).every(Boolean);
+  }
+
+  /** Постбек **/
   function firePostback(clickid){
     if(!clickid) { console.warn('postback skipped: empty clickid'); return false; }
-    const url = `${POSTBACK_BASE}?clickid=${encodeURIComponent(clickid)}&type=${encodeURIComponent(POSTBACK_TYPE)}`;
-    // Пиксель — максимально совместимо
+    const url = `${POSTBACK_BASE}?clickid=${encodeURIComponent(clickid)}&type=${encodeURIComponent(POSTBACK_TYPE)}&ts=${Date.now()}`;
     const img = new Image();
     img.referrerPolicy = 'no-referrer-when-downgrade';
-    img.src = url + `&ts=${Date.now()}`; // чтобы не кэшился
+    img.src = url;
     return true;
-    // Если захочешь fetch:
-    // return fetch(url, { method:'GET', mode:'no-cors', keepalive:true }).then(()=>true).catch(()=>false);
   }
 
-    // submit
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      if(!validateForm()){
-        msg.className='msg error'; msg.textContent='Please correct highlighted fields.'; return;
-      }
-      msg.textContent=''; btn.disabled=true; btn.textContent='Submitting…';
+  /** Submit **/
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    if(!validateForm()){
+      msg.className='msg error';
+      msg.textContent='Please correct highlighted fields.';
+      return;
+    }
+    msg.textContent=''; btn.disabled=true; btn.textContent='Submitting…';
 
-      const payload={
-        email:form.email.value.trim(),
-        password:form.password.value,
-        firstName:form.firstName.value.trim(),
-        lastName:form.lastName.value.trim(),
-        messengerType:form.messengerType.value,
-        messenger:form.messenger.value.trim()
-      };
+    const payload={
+      email:form.email.value.trim(),
+      password:form.password.value,
+      firstName:form.firstName.value.trim(),
+      lastName:form.lastName.value.trim(),
+      messengerType:form.messengerType.value,
+      messenger:form.messenger.value.trim()
+    };
 
-      try{
-        const r = await fetch('/signup-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-        const data = await r.json();
-        if(!r.ok) throw new Error(data.error||'Request failed');
+    try{
+      const r = await fetch('/signup-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const data = await r.json();
+      if(!r.ok) throw new Error(data.error||'Request failed');
 
-        // УСПЕХ: скрываем форму и показываем модалку как на макете
-        form.classList.add('hidden');
-    logo.classList.add('hidden');
-    reg_title.classList.add('hidden');
-    overlay.classList.add('show');
+      // успех: скрываем форму, логотип и заголовок, показываем модалку
+      form.classList.add('hidden');
+      logo.classList.add('hidden');
+      reg_title.classList.add('hidden');
+      overlay.classList.add('show');
 
-     // Постбек (только clickid)
+      // постбек с clickid из cookie/URL
       const clickid = getClickId();
       firePostback(clickid);
-      }catch(err){
-        msg.className='msg error'; msg.textContent='Error: '+err.message;
-      }finally{
-        btn.disabled=false; btn.textContent='Sign Up';
-      }
-    });
-
-    // закрыть модалку
-    function closeSuccess(){
-      overlay.classList.remove('show');
-      // при желании можно оставить форму скрытой; если хотите заново — раскомментируйте:
-      // form.reset(); form.classList.remove('hidden');
-      // document.querySelectorAll('.control').forEach(el=>el.classList.remove('is-valid','is-invalid'));
+    }catch(err){
+      msg.className='msg error';
+      msg.textContent='Error: '+err.message;
+    }finally{
+      btn.disabled=false; btn.textContent='Sign Up';
     }
-    closeModal.addEventListener('click', closeSuccess);
-    overlay.addEventListener('click', e=>{ if(e.target===overlay) closeSuccess(); });
-    document.addEventListener('keydown', e=>{ if(e.key==='Escape' && overlay.classList.contains('show')) closeSuccess(); });
+  });
 
-     /** TEST HELPERS **/
-  // 1) Показать модалку успеха без постбека
-  function simulateSuccess(){ form.classList.add('hidden'); showSuccessModal(); console.log('✅ Simulated success (no postback)'); }
-  // 2) Показать модалку И отправить постбек.
-  //    Можно передать clickid вручную: simulateSuccessWithPostback('abc123')
-  function simulateSuccessWithPostback(clickidOverride){
-    const cid = clickidOverride || getClickId() || 'test-clickid';
-    form.classList.add('hidden');
-    showSuccessModal();
-    const ok = firePostback(cid);
-    console.log('✅ Simulated success WITH postback:', ok, { clickid: cid, type: POSTBACK_TYPE });
+  /** Закрытие модалки **/
+  function closeSuccess(){
+    overlay.classList.remove('show');
   }
-  // Примеры в консоли:
-  // simulateSuccess();
-  // simulateSuccessWithPostback();            // возьмёт clickid из URL, или 'test-clickid'
-  // simulateSuccessWithPostback('fsddas');    // отправит на ...postback?clickid=fsddas&type=registration
-  </script>
+  closeModal.addEventListener('click', closeSuccess);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeSuccess(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && overlay.classList.contains('show')) closeSuccess(); });
+</script>
+
   
 </body>
 </html>
