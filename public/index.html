@@ -1,108 +1,130 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <title>Registration</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#f3f5f9; }
-    .card { width: 520px; max-width: 92vw; margin: 6vh auto; background:#fff; padding:32px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.06); }
+    <meta charset="utf-8" />
+    <title>Registration</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#19121c; }
+    .card { width: 560px; max-width: 83vw; margin: 6vh auto; background:#fff; padding: 28px; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.06); }
+    .header { text-align:center; margin-bottom: 18px; }
+    .logo { width: 72px; height: 72px; display:inline-flex; align-items:center; justify-content:center; border-radius:18px; background:#eef3ff; margin-bottom: 8px; }
+    .title { font-size: 28px; line-height:1.2; margin: 6px 0 2px; color:#0b1b3a; font-weight: 700; }
+    .subtitle { color:#6b7280; margin:0; font-size:14px; }
     .row { margin-bottom:14px; }
     label { display:block; font-size:14px; color:#4b5563; margin-bottom:6px; }
-    input, select { width:100%; height:44px; border:1px solid #e5e7eb; border-radius:10px; padding:0 12px; font-size:15px; }
-    button { width:100%; height:48px; border:0; border-radius:12px; font-weight:600; font-size:16px; }
-    .primary { background:#91b9f7; color:#0b1b3a; cursor:pointer; }
+    .control { width:100%; height:46px; border:1px solid #e5e7eb; border-radius:12px; padding:0 12px; font-size:15px; background:#fff; outline:none; box-sizing:border-box; }
+    .control:focus { border-color:#91b9f7; box-shadow:0 0 0 3px rgba(145,185,247,.3); }
+    /* make native select look like inputs */
+    select.control {
+      appearance:none; -webkit-appearance:none; -moz-appearance:none;
+      background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%),
+                        linear-gradient(135deg, #6b7280 50%, transparent 50%),
+                        linear-gradient(to right, transparent, transparent);
+      background-position: calc(100% - 20px) calc(50% - 4px),
+                           calc(100% - 14px) calc(50% - 4px),
+                           calc(100% - 2.2em) 0.55em;
+      background-size: 6px 6px, 6px 6px, 1px 1.9em;
+      background-repeat: no-repeat;
+      padding-right: 42px;
+    }
+    .divider { margin:18px 0;border:none;border-top:1px solid #eef0f4 }
+    .btn { width:100%; height:50px; border:0; border-radius:14px; font-weight:600; font-size:16px; cursor:pointer; }
+    .btn.primary { background-image: linear-gradient(225deg, #fe6283, #9e54bb); color:#fff; }
     .muted { color:#6b7280; font-size:14px; text-align:center; margin-top:10px; }
-    .hidden { display:none; }
-    .error { color:#b91c1c; font-size:14px; margin-top:8px; }
-    .success { color:#065f46; font-size:14px; margin-top:8px; }
+    .msg { margin-top:12px; font-size:14px; }
+    .msg.success { color:#0d6a2a; }
+    .msg.error { color:#b91c1c; }
   </style>
 </head>
+
 <body>
-  <div class="card">
-    <h2 style="text-align:center;margin:0 0 4px 0;color:#374151;">Registration</h2>
-    <p style="text-align:center;margin:0 0 18px 0;color:#6b7280;">Your credentials</p>
-
-    <form id="signupForm" autocomplete="on">
-      <div class="row">
-        <label for="email">Login</label>
-        <input id="email" name="email" type="email" placeholder="your@email.com" required />
-      </div>
-      <div class="row">
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" placeholder="Password" minlength="8" required />
-      </div>
-
-      <hr style="margin:18px 0;border:none;border-top:1px solid #eee" />
-
-      <div class="row">
-        <label for="firstName">First Name</label>
-        <input id="firstName" name="firstName" placeholder="First name" required />
-      </div>
-      <div class="row">
-        <label for="lastName">Last Name</label>
-        <input id="lastName" name="lastName" placeholder="Last name" required />
-      </div>
-
-      <div class="row">
-        <label for="messengerType">Messenger type</label>
-        <select id="messengerType" name="messengerType" required>
-          <option value="" disabled selected>Choose…</option>
-          <option>Telegram</option>
-          <option>Skype</option>
-          <option>WhatsApp</option>
-          <option>WeChat</option>
-          <option>Other</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <label for="messenger">Messenger</label>
-        <input id="messenger" name="messenger" placeholder="username / phone / link" required />
-      </div>
-
-      <button class="primary" id="submitBtn" type="submit">Sign Up</button>
-      <div id="msg" class="muted"></div>
-    </form>
-  </div>
-
-  <script>
-    const form = document.getElementById('signupForm');
-    const msg = document.getElementById('msg');
+  
+    <div class="card">
+        <div class="header">
+          <img src="https://cdn.prod.website-files.com/671cacb5ad794eb512198be7/67bd1dd0b07424fd160bc81e_Asset%203%20(1).svg" alt="">
+            <h1 class="title">Registration</h1>
+            <p class="subtitle">Your credentials</p>
+        </div>
+        <form id="regForm">
+            <div class="row">
+                <label for="email">Login</label>
+                <input id="email" name="email" type="email" placeholder="your@email.com" required class="control" />
+            </div>
+            <div class="row">
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" placeholder="Password" minlength="8" required class="control" />
+            </div>
+            <hr class="divider" />
+            <div class="row">
+                <label for="firstName">First Name</label>
+                <input id="firstName" name="firstName" placeholder="First name" required class="control" />
+            </div>
+            <div class="row">
+                <label for="lastName">Last Name</label>
+                <input id="lastName" name="lastName" placeholder="Last name" required class="control" />
+            </div>
+            <div class="row">
+                <label for="messengerType">Messenger type</label>
+                <select id="messengerType" name="messengerType" required class="control">
+                    <option value="" disabled selected>Choose…</option>
+                    <option>Telegram</option>
+                    <option>WhatsApp</option>
+                    <option>Skype</option>
+                    <option>WeChat</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div class="row">
+                <label for="messenger">Messenger</label>
+                <input id="messenger" name="messenger" placeholder="Username / Phone / Link" class="control" />
+            </div>
+            <button id="submitBtn" class="btn primary" type="submit">Sign Up</button>
+            <div id="msg" class="msg"></div>
+            <p class="muted">By continuing you agree to the processing of your data for registration.</p>
+        </form>
+    </div>
+    <script>
+    const form = document.getElementById('regForm');
     const btn = document.getElementById('submitBtn');
+    const msg = document.getElementById('msg');
 
     form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      msg.textContent = '';
-      btn.disabled = true; btn.textContent = 'Processing…';
+        e.preventDefault();
+        btn.disabled = true;
+        btn.textContent = 'Submitting…';
+        msg.textContent = '';
 
-      const payload = {
-        email: form.email.value.trim(),
-        password: form.password.value,
-        firstName: form.firstName.value.trim(),
-        lastName: form.lastName.value.trim(),
-        messengerType: form.messengerType.value,
-        messenger: form.messenger.value.trim(),
-      };
+        const payload = {
+            email: form.email.value.trim(),
+            password: form.password.value,
+            firstName: form.firstName.value.trim(),
+            lastName: form.lastName.value.trim(),
+            messengerType: form.messengerType.value,
+            messenger: form.messenger.value.trim()
+        };
 
-      try {
-        const res = await fetch('/signup-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Request failed');
-        msg.className = 'success'; 
-        msg.textContent = 'Completed. Check your e-mail if confirmation is required.';
-        form.reset();
-      } catch (err) {
-        msg.className = 'error';
-        msg.textContent = 'Error: ' + err.message;
-      } finally {
-        btn.disabled = false; btn.textContent = 'Sign Up';
-      }
+        try {
+            const res = await fetch('/signup-proxy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Request failed');
+            msg.className = 'msg success';
+            msg.textContent = 'Completed. Check your e-mail if confirmation is required.';
+            form.reset();
+        } catch (err) {
+            msg.className = 'msg error';
+            msg.textContent = 'Error: ' + err.message;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Sign Up';
+        }
     });
-  </script>
+    </script>
 </body>
+
 </html>
