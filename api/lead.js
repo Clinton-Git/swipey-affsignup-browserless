@@ -32,9 +32,11 @@ export default async function handler(req, res) {
 
     const response = await client.publishJSON({
       url: RUN_SIGNUP_URL,
-      body: { email, password, firstName, lastName, messengerType, messenger, clickid },
-      retries: 3
-    });
+     body: { email, password, firstName, lastName, messengerType, messenger, clickid },
+  // QStash ждёт завершения запроса воркера не меньше, чем таймаут ниже:
+  timeout: 120,   // секунды (рекомендую 120–180 для Playwright)
+  retries: 1,     // временно отключим ретраи, чтобы не плодить дублей
+});
 
     if (!response?.messageId) {
       console.error("[lead] QStash publish failed:", response);
