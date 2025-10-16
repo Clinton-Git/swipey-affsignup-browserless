@@ -1,53 +1,60 @@
-// /api/lead.js
 import { Client } from "@upstash/qstash";
 
 export default async function handler(req, res) {
-  res.setHeader("Content-Type", "application/json"); // <- всегда JSON
-  if (req.method !== "POST") {
+  if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
-  }
 
   const { email, password, firstName, lastName, messengerType, messenger, clickid } = req.body || {};
+
   if (!email || !password || !firstName || !lastName) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
+  const RUN_SIGNUP_URL = process.env.RUN_SIGNUP_URL;
+  const QSTASH_TOKEN = process.env.QSTASH_TOKEN;
+  const QSTASH_URL = process.env.QSTASH_URL || "https://qstash.upstash.io";
+
+  if (!RUN_SIGNUP_URL || !QSTASH_TOKEN) {
+    return res.status(500).json({
+      error: "Missing required environment variables",
+      missing: {
+        RUN_SIGNUP_URL: !RUN_SIGNUP_URL,
+        QSTASH_TOKEN: !QSTASH_TOKEN
+      }
+    });
+  }
+
   try {
-    // (опц.) лог в Google Sheets
-    if (process.env.GAS_WEBAPP_URL) {
-      fetch(process.env.GAS_WEBAPP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ts: Date.now(), email, firstName, lastName, messengerType, messenger, clickid: clickid || ""
-        })
-      }).catch(() => {});
-    }
-
-    const RUN_SIGNUP_URL = process.env.RUN_SIGNUP_URL;
-    const QSTASH_TOKEN = process.env.QSTASH_TOKEN;
-    const QSTASH_URL = process.env.QSTASH_URL || "https://qstash.upstash.io";
-
-    if (!RUN_SIGNUP_URL) return res.status(500).json({ error: "RUN_SIGNUP_URL is missing" });
-    if (!QSTASH_TOKEN)  return res.status(500).json({ error: "QSTASH_TOKEN is missing" });
-
-    const qstash = new Client({ token: QSTASH_TOKEN, url: QSTASH_URL });
-
-    const publishResp = await qstash.publishJSON({
-      url: RUN_SIGNUP_URL,
-      body: { email, password, firstName, lastName, messengerType, messenger, clickid: clickid || "" },
-      retries: 3,
+    const client = new Client({
+      token: QSTASH_TOKEN,
+      url: QSTASH_URL
     });
 
-    if (!publishResp?.messageId) {
-      console.error("QStash publish unexpected response:", publishResp);
-      return res.status(502).json({ error: "Queue publish failed", details: publishResp || null });
+    const response = await client.publishJSON({
+      url: RUN_SIGNUP_URL,
+      body: { email, password, firstName, lastName, messengerType, messenger, clickid },
+      retries: 3
+    });
+
+    if (!response?.messageId) {
+      console.error("[lead] QStash publish failed:", response);
+      return res.status(500).json({
+        error: "Queue publish failed",
+        details: response || null
+      });
     }
 
-    return res.status(200).json({ ok: true, queued: true, messageId: publishResp.messageId });
-  } catch (err) {
-    // важно логировать
-    console.error("QStash publish error:", err?.status || "", err?.message || err);
-    return res.status(502).json({ error: "Queue publish failed", details: err?.message || String(err) });
+    return res.status(200).json({
+      ok: true,
+      queued: true,
+      messageId: response.messageId
+    });
+
+  } catch (error) {
+    console.error("[lead] QStash error:", error);
+    return res.status(500).json({
+      error: "Queue publish failed",
+      details: error?.message || String(error)
+    });
   }
 }
