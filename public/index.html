@@ -129,8 +129,7 @@
 
  <script>
   /** CONFIG **/
-  const POSTBACK_BASE = 'https://rtrk.swipey.club/postback';
-  const POSTBACK_TYPE = 'registration';
+  const POSTBACK_TYPE = 'registration';          // оставлено, если захотите показать где-то в UI
   const CLICKID_COOKIE = 'clickid';
   const CLICKID_TTL_DAYS = 7;
 
@@ -151,7 +150,7 @@
     document.cookie = `${name}=${encodeURIComponent(value)}; ${expires}; path=/; SameSite=Lax`;
   }
   function getCookie(name){
-    const m = document.cookie.match(new RegExp('(?:^|; )'+name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g,'\\$&')+'=([^;]*)'));
+    const m = document.cookie.match(new RegExp('(?:^|; )'+name.replace(/[-[\]{}()*+?.,\\^$|#\\s]/g,'\\$&')+'=([^;]*)'));
     return m ? decodeURIComponent(m[1]) : '';
   }
 
@@ -194,17 +193,7 @@
       .map(id=>validateField(document.getElementById(id))).every(Boolean);
   }
 
-  /** Постбек **/
-  function firePostback(clickid){
-    if(!clickid) { console.warn('postback skipped: empty clickid'); return false; }
-    const url = `${POSTBACK_BASE}?clickid=${encodeURIComponent(clickid)}&type=${encodeURIComponent(POSTBACK_TYPE)}&ts=${Date.now()}`;
-    const img = new Image();
-    img.referrerPolicy = 'no-referrer-when-downgrade';
-    img.src = url;
-    return true;
-  }
-
-  /** Submit **/
+  /** Submit (теперь → /api/lead, без фронтового постбека) **/
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     if(!validateForm()){
@@ -220,23 +209,27 @@
       firstName:form.firstName.value.trim(),
       lastName:form.lastName.value.trim(),
       messengerType:form.messengerType.value,
-      messenger:form.messenger.value.trim()
+      messenger:form.messenger.value.trim(),
+      clickid: getClickId()
     };
 
     try{
-      const r = await fetch('/signup-proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      // важное изменение: отправляем на /api/lead (очередь + лог в sheets)
+      const r = await fetch('/api/lead', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
       const data = await r.json();
       if(!r.ok) throw new Error(data.error||'Request failed');
 
-      // успех: скрываем форму, логотип и заголовок, показываем модалку
+      // моментальный «успех» для пользователя
       form.classList.add('hidden');
       logo.classList.add('hidden');
       reg_title.classList.add('hidden');
       overlay.classList.add('show');
 
-      // постбек с clickid из cookie/URL
-      const clickid = getClickId();
-      firePostback(clickid);
+      // постбек уехал на сервер (в воркер), здесь больше ничего не шлём
     }catch(err){
       msg.className='msg error';
       msg.textContent='Error: '+err.message;
@@ -253,6 +246,7 @@
   overlay.addEventListener('click', e=>{ if(e.target===overlay) closeSuccess(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && overlay.classList.contains('show')) closeSuccess(); });
 </script>
+
 
   
 </body>
